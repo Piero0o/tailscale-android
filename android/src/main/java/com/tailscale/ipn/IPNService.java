@@ -54,9 +54,11 @@ public class IPNService extends VpnService {
 		}
 		if (wifis.isEmpty()) {
 			android.util.Log.v("类型", "流量: " + networks.length);
+			notify("类型", "流量: " + networks.length);
 			return networks;
 		} else {
 			android.util.Log.v("类型", "WIFI: " + wifis.size());
+			notify("类型", "WIFI: " + wifis.size());
 			return wifis.toArray(new Network[0]);
 		}
 	}
