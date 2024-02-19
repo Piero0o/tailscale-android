@@ -4,17 +4,20 @@
 
 package com.tailscale.ipn;
 
-import android.os.Build;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.VpnService;
+import android.net.Network;
+import android.net.NetworkInfo;
+import android.net.ConnectivityManager;
+import android.os.Build;
 import android.system.OsConstants;
-
-import org.gioui.GioActivity;
-
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class IPNService extends VpnService {
 	public static final String ACTION_CONNECT = "com.tailscale.ipn.CONNECT";
@@ -42,13 +45,14 @@ public class IPNService extends VpnService {
 	private Network[] getWifiNetworkOrElse() {
 		ConnectivityManager connectivityManager = App.currentConnectivityManager;
 		Network[] networks = connectivityManager.getAllNetworks();
+		List<Network> wifis = new ArrayList<>();
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
 			if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                return new Network[]{network};
+				wifis.add(network);
 			}
 		}
-		return networks;
+		return wifis.isEmpty() ? networks : wifis.toArray(new Network[0]);
 	}
 
 	@Override public void onDestroy() {
