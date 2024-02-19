@@ -39,6 +39,18 @@ public class IPNService extends VpnService {
 		disconnect();
 	}
 
+	private Network[] getWifiNetworkOrElse() {
+		ConnectivityManager connectivityManager = App.currentConnectivityManager;
+		Network[] networks = connectivityManager.getAllNetworks();
+		for (Network network : networks) {
+			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+			if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                return new Network[]{network};
+			}
+		}
+		return networks;
+	}
+
 	@Override public void onDestroy() {
 		close();
 		super.onDestroy();
@@ -70,7 +82,7 @@ public class IPNService extends VpnService {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
 			b.setMetered(false); // Inherit the metered status from the underlying networks.
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-			b.setUnderlyingNetworks(null); // Use all available networks.
+			b.setUnderlyingNetworks(getWifiNetworkOrElse()); // Use all available networks.
 
 		// RCS/Jibe https://github.com/tailscale/tailscale/issues/2322
 		this.disallowApp(b, "com.google.android.apps.messaging");
