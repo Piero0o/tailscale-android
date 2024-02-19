@@ -53,10 +53,10 @@ public class IPNService extends VpnService {
 			}
 		}
 		if (wifis.isEmpty()) {
-			android.util.Log.i("类型", "流量: " + networks.length);
+			android.util.Log.v("类型", "流量: " + networks.length);
 			return networks;
 		} else {
-			android.util.Log.i("类型", "WIFI: " + wifis.size());
+			android.util.Log.v("类型", "WIFI: " + wifis.size());
 			return wifis.toArray(new Network[0]);
 		}
 	}
@@ -85,6 +85,7 @@ public class IPNService extends VpnService {
 	}
 
 	protected VpnService.Builder newBuilder() {
+		android.util.Log.v("create vpn", "create vpn...");
 		VpnService.Builder b = new VpnService.Builder()
 			.setConfigureIntent(configIntent())
 			.allowFamily(OsConstants.AF_INET)
