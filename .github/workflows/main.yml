@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: build
+        run: |
+          docker build -t tailscale-android .
+          docker run -v ${PWD}:/build/tailscale-android --rm tailscale-android make tailscale-debug.apk
+ 
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        if: ${{ success() }}
+        with:
+          tag_name: latest
+          files: tailscale-debug.apk
+          release: true
+          repository: ${{ github.actor }}/tailscale-android
