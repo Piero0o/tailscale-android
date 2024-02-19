@@ -52,7 +52,13 @@ public class IPNService extends VpnService {
 				wifis.add(network);
 			}
 		}
-		return wifis.isEmpty() ? networks : wifis.toArray(new Network[0]);
+		if (wifis.isEmpty()) {
+			android.util.Log.i("类型", "流量: " + networks.length);
+			return networks;
+		} else {
+			android.util.Log.i("类型", "WIFI: " + wifis.size());
+			return wifis.toArray(new Network[0]);
+		}
 	}
 
 	@Override public void onDestroy() {
