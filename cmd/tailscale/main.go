@@ -449,9 +449,12 @@ func (a *App) runBackend(ctx context.Context) error {
 				fallbackLog := fmt.Sprintf("BUG-%v-%v-%v", backendLogIDStr, time.Now().UTC().Format("20060102150405Z"), randHex(8))
 				a.getBugReportID(ctx, a.bugReport, fallbackLog)
             case ModeEvent:
-				cls := jni.GetObjectClass(env, s)
-                m := jni.GetMethodID(env, cls, "changeVpnMode", "()Z")
-                ok, err := jni.CallBooleanMethod(env, s, m)
+                err := jni.Do(a.jvm, func(env *jni.Env) error {
+                    cls := jni.GetObjectClass(env, service)
+                    m := jni.GetMethodID(env, cls, "changeVpnMode", "()Z")
+                    n, err := jni.CallObjectMethod(env, service, m)
+                    return err
+                })
 			case OAuth2Event:
 				go b.backend.Login(e.Token)
 			case ToggleEvent:
