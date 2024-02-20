@@ -15,8 +15,11 @@ import android.os.Build;
 import android.system.OsConstants;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import javafx.scene.input.DataFormat;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class IPNService extends VpnService {
@@ -43,7 +46,7 @@ public class IPNService extends VpnService {
 	}
 
 	private Network[] getWifiNetworkOrElse() {
-		ConnectivityManager connectivityManager = App.currentConnectivityManager;
+		ConnectivityManager connectivityManager = getApplication().connectivityManager;
 		Network[] networks = connectivityManager.getAllNetworks();
 		List<Network> wifis = new ArrayList<>();
 		for (Network network : networks) {
@@ -52,13 +55,21 @@ public class IPNService extends VpnService {
 				wifis.add(network);
 			}
 		}
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, 4)
+				.setSmallIcon(R.drawable.ic_notification)
+				.setContentTitle("使用类型")
+				.setContentIntent(configIntent())
+				.setAutoCancel(true)
+				.setOnlyAlertOnce(false)
+				.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+		String time = SimpleDateFormat.getDateInstance().format(new Date());
 		if (wifis.isEmpty()) {
-			android.util.Log.v("类型", "流量: " + networks.length);
-			notify("类型", "流量: " + networks.length);
+			NotificationManagerCompat.from(this)
+					.notify(4, builder.setContentText(time + ":流量").build());
 			return networks;
 		} else {
-			android.util.Log.v("类型", "WIFI: " + wifis.size());
-			notify("类型", "WIFI: " + wifis.size());
+			NotificationManagerCompat.from(this)
+					.notify(4, builder.setContentText(time + ":WIFI").build());
 			return wifis.toArray(new Network[0]);
 		}
 	}
@@ -87,7 +98,6 @@ public class IPNService extends VpnService {
 	}
 
 	protected VpnService.Builder newBuilder() {
-		android.util.Log.v("create vpn", "create vpn...");
 		VpnService.Builder b = new VpnService.Builder()
 			.setConfigureIntent(configIntent())
 			.allowFamily(OsConstants.AF_INET)
