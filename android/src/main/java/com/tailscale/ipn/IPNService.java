@@ -47,20 +47,24 @@ public class IPNService extends VpnService {
 		ConnectivityManager connectivityManager = ((App)getApplicationContext()).connectivityManager;
 		Network[] networks = connectivityManager.getAllNetworks();
 		List<Network> wifis = new ArrayList<>();
+		List<String> wifiInfos = new ArrayList<>();
+		List<String> otherInfos = new ArrayList<>();
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
 			if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
 				wifis.add(network);
+				wifiInfos.add(networkInfo.getSubtypeName());
+			} else {
+				otherInfos.add(networkInfo.getSubtypeName());
 			}
 		}
 		if (!wifis.isEmpty()) {
 			titleMsg[0] = "WIFI网络";
-			Network[] wifiArr = wifis.toArray(new Network[0]);
-			titleMsg[1] = printNet(wifiArr);
-			return wifiArr;
+			titleMsg[1] = printNet(wifiInfos);
+			return wifis.toArray(new Network[0]);
 		} else if (networks.length > 0) {
 			titleMsg[0] = "流量网络";
-			titleMsg[1] = printNet(networks);
+			titleMsg[1] = printNet(otherInfos);
 			return networks;
 		} else {
 			titleMsg[0] = "所有网络";
@@ -69,10 +73,10 @@ public class IPNService extends VpnService {
 		}
 	}
 
-	private String printNet(Network... networks) {
+	private String printNet(List<String> networks) {
 		List<String> list = new ArrayList<>();
-		for (int i = 0; i < networks.length; i++) {
-			list.add((i + 1) + "." + networks[i].getSubtypeName());
+		for (int i = 0; i < networks.size(); i++) {
+			list.add((i + 1) + "." + networks.get(i));
 		}
 		return String.join("\n", list);
 	}
