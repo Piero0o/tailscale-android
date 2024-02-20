@@ -1293,6 +1293,8 @@ func (a *App) processUIEvents(w *app.Window, events []UIEvent, act jni.Object, s
 				log.Printf("bug report fallback because timed out. fallback report: %s", logMarker)
 				w.WriteClipboard(logMarker)
 			}
+        case TypeEvent:
+            requestBackend(e)
 		case BeExitNodeEvent:
 			requestBackend(e)
 		case ExitAllowLANEvent:
