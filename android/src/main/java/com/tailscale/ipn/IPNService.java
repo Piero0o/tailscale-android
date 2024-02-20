@@ -21,10 +21,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IPNService extends VpnService {
 
 	public static final AtomicBoolean onlyUseWifi = new AtomicBoolean(true);
+
+	private static final AtomicInteger logId = new AtomicInteger(10);
 	public static final String ACTION_CONNECT = "com.tailscale.ipn.CONNECT";
 	public static final String ACTION_DISCONNECT = "com.tailscale.ipn.DISCONNECT";
 
@@ -47,20 +50,19 @@ public class IPNService extends VpnService {
 		disconnect();
 	}
 
-	public boolean changeVpnMode() {
+	public void changeVpnMode() {
 		boolean setV = !onlyUseWifi.get();
 		onlyUseWifi.set(setV);
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.NOTIFY_CHANNEL_ID)
 				.setSmallIcon(R.drawable.ic_notification)
 				.setContentTitle("网络模式")
-				.setContentText(setV ? "只用WIFI" : "不只用WIFI")
+				.setContentText(setV ? "已改为：纯WIFI模式" : "已改为：混合模式（优先WIFI）")
 				.setContentIntent(configIntent())
 				.setAutoCancel(true)
 				.setOnlyAlertOnce(false)
 				.setPriority(NotificationCompat.PRIORITY_DEFAULT);
 		NotificationManagerCompat.from(this)
-				.notify(App.NOTIFY_NOTIFICATION_ID, builder.build());
-		return setV;
+				.notify(logId.getAndIncrement(), builder.build());
 	}
 
 	private Network[] getWifiNetworkOrElse() {
@@ -78,7 +80,7 @@ public class IPNService extends VpnService {
 		}
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.NOTIFY_CHANNEL_ID)
 				.setSmallIcon(R.drawable.ic_notification)
-				.setContentTitle("使用模式")
+				.setContentTitle("连接网络")
 				.setContentIntent(configIntent())
 				.setAutoCancel(true)
 				.setOnlyAlertOnce(false)
@@ -86,10 +88,10 @@ public class IPNService extends VpnService {
 		String time = SimpleDateFormat.getDateInstance().format(new Date());
 		if (onlyUseWifi.get()) {
 			NotificationManagerCompat.from(this)
-					.notify(App.NOTIFY_NOTIFICATION_ID, builder.setContentText(time + "  WIFI:"+wifis.size()).build());
+					.notify(logId.getAndIncrement(), builder.setContentText("WIFI:"+wifis.size()).build());
 		} else {
 			NotificationManagerCompat.from(this)
-					.notify(App.NOTIFY_NOTIFICATION_ID, builder.setContentText(time + "  WIFI:"+wifis.size() + "  Others:" + others.size()).build());
+					.notify(logId.getAndIncrement(), builder.setContentText("WIFI:"+wifis.size() + "  其他:" + others.size()).build());
 			wifis.addAll(others);
 		}
 		return wifis.toArray(new Network[0]);
