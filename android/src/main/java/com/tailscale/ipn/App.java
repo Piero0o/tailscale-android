@@ -84,8 +84,8 @@ public class App extends Application {
 
 	private static final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-	private ConnectivityManager connectivityManager;
-	public static ConnectivityManager currentConnectivityManager;
+	ConnectivityManager connectivityManager;
+
 	public DnsConfig dns = new DnsConfig();
 	public DnsConfig getDnsConfigObj() { return this.dns; }
 
@@ -95,7 +95,6 @@ public class App extends Application {
 		Gio.init(this);
 
 		this.connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-		this.currentConnectivityManager = this.connectivityManager;
 		setAndRegisterNetworkCallbacks();
 
 		createNotificationChannel(NOTIFY_CHANNEL_ID, "Notifications", NotificationManagerCompat.IMPORTANCE_DEFAULT);

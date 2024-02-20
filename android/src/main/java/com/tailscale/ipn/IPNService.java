@@ -16,8 +16,7 @@ import android.system.OsConstants;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class IPNService extends VpnService {
 	public static final String ACTION_CONNECT = "com.tailscale.ipn.CONNECT";
@@ -42,8 +41,10 @@ public class IPNService extends VpnService {
 		disconnect();
 	}
 
+	private String[] titleMsg = new String[2];
+
 	private Network[] getWifiNetworkOrElse() {
-		ConnectivityManager connectivityManager = App.currentConnectivityManager;
+		ConnectivityManager connectivityManager = ((App)getApplicationContext()).connectivityManager;
 		Network[] networks = connectivityManager.getAllNetworks();
 		List<Network> wifis = new ArrayList<>();
 		for (Network network : networks) {
@@ -52,15 +53,28 @@ public class IPNService extends VpnService {
 				wifis.add(network);
 			}
 		}
-		if (wifis.isEmpty()) {
-			android.util.Log.v("类型", "流量: " + networks.length);
-			notify("类型", "流量: " + networks.length);
+		if (!wifis.isEmpty()) {
+			titleMsg[0] = "WIFI网络";
+			Network[] wifiArr = wifis.toArray(new Network[0]);
+			titleMsg[1] = printNet(wifiArr);
+			return wifiArr;
+		} else if (networks.length > 0) {
+			titleMsg[0] = "流量网络";
+			titleMsg[1] = printNet(networks);
 			return networks;
 		} else {
-			android.util.Log.v("类型", "WIFI: " + wifis.size());
-			notify("类型", "WIFI: " + wifis.size());
-			return wifis.toArray(new Network[0]);
+			titleMsg[0] = "所有网络";
+			titleMsg[1]	= "无网络";
+			return null;
 		}
+	}
+
+	private String printNet(Network... networks) {
+		List<String> list = new ArrayList<>();
+		for (int i = 0; i < networks.length; i++) {
+			list.add((i + 1) + "." + networks[i].getSubtypeName());
+		}
+		return String.join("\n", list);
 	}
 
 	@Override public void onDestroy() {
@@ -87,7 +101,6 @@ public class IPNService extends VpnService {
 	}
 
 	protected VpnService.Builder newBuilder() {
-		android.util.Log.v("create vpn", "create vpn...");
 		VpnService.Builder b = new VpnService.Builder()
 			.setConfigureIntent(configIntent())
 			.allowFamily(OsConstants.AF_INET)
@@ -136,8 +149,8 @@ public class IPNService extends VpnService {
 	public void updateStatusNotification(String title, String message) {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.STATUS_CHANNEL_ID)
 			.setSmallIcon(R.drawable.ic_notification)
-			.setContentTitle(title)
-			.setContentText(message)
+			.setContentTitle(title + ("Connected".equals(title) ? "  " + titleMsg[0] : ""))
+			.setContentText("".equals(message) ? titleMsg[1] : message)
 			.setContentIntent(configIntent())
 			.setPriority(NotificationCompat.PRIORITY_LOW);
 
