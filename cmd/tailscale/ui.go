@@ -104,6 +104,7 @@ type UI struct {
 		copy           widget.Clickable
 		reauth         widget.Clickable
 		bug            widget.Clickable
+		mode           widget.Clickable
 		beExit         widget.Clickable
 		exits          widget.Clickable
 		about          widget.Clickable
@@ -425,9 +426,9 @@ func (ui *UI) layout(gtx layout.Context, sysIns system.Insets, state *clientStat
 		ui.showCopied(gtx, "bug report marker to clipboard")
 	}
 
-	if ui.menuClicked(&ui.menu.type) {
-        events = append(events, TypeEvent{})
-        ui.showCopied(gtx, "change vpn type")
+	if ui.menuClicked(&ui.menu.mode) {
+        events = append(events, ModeEvent{})
+        ui.showCopied(gtx, "change vpn mode")
     }
 
 	if ui.menuClicked(&ui.menu.beExit) {
@@ -1233,7 +1234,7 @@ func (ui *UI) layoutMenu(gtx layout.Context, sysIns system.Insets, expiry time.T
 				items = append(items, menuItem{title: "Use exit node...", btn: &menu.exits})
 			}
 			items = append(items,
-			    menuItem{title: "Change VPN type", btn: &menu.type},
+			    menuItem{title: "Change VPN mode", btn: &menu.mode},
 				menuItem{title: "Bug report", btn: &menu.bug},
 				menuItem{title: "Reauthenticate", btn: &menu.reauth},
 				menuItem{title: "Log out", btn: &menu.logout},

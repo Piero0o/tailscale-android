@@ -202,7 +202,7 @@ type (
 	ToggleEvent       struct{}
 	ReauthEvent       struct{}
 	BugEvent          struct{}
-	TypeEvent         struct{}
+	ModeEvent         struct{}
 	WebAuthEvent      struct{}
 	GoogleAuthEvent   struct{}
 	LogoutEvent       struct{}
@@ -448,7 +448,7 @@ func (a *App) runBackend(ctx context.Context) error {
 				backendLogIDStr := a.logIDPublicAtomic.Load().String()
 				fallbackLog := fmt.Sprintf("BUG-%v-%v-%v", backendLogIDStr, time.Now().UTC().Format("20060102150405Z"), randHex(8))
 				a.getBugReportID(ctx, a.bugReport, fallbackLog)
-            case TypeEvent:
+            case ModeEvent:
 				cls := jni.GetObjectClass(env, s)
                 m := jni.GetMethodID(env, cls, "changeVpnMode", "()Z")
                 ok, err := jni.CallBooleanMethod(env, s, m)
@@ -1293,7 +1293,7 @@ func (a *App) processUIEvents(w *app.Window, events []UIEvent, act jni.Object, s
 				log.Printf("bug report fallback because timed out. fallback report: %s", logMarker)
 				w.WriteClipboard(logMarker)
 			}
-        case TypeEvent:
+        case ModeEvent:
             requestBackend(e)
 		case BeExitNodeEvent:
 			requestBackend(e)
