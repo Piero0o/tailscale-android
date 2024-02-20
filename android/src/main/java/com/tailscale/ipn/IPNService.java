@@ -15,7 +15,6 @@ import android.os.Build;
 import android.system.OsConstants;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import javafx.scene.input.DataFormat;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
