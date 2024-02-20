@@ -425,6 +425,11 @@ func (ui *UI) layout(gtx layout.Context, sysIns system.Insets, state *clientStat
 		ui.showCopied(gtx, "bug report marker to clipboard")
 	}
 
+	if ui.menuClicked(&ui.menu.type) {
+        events = append(events, TypeEvent{})
+        ui.showCopied(gtx, "change vpn type")
+    }
+
 	if ui.menuClicked(&ui.menu.beExit) {
 		ui.runningExit = !ui.runningExit
 		events = append(events, BeExitNodeEvent(ui.runningExit))
@@ -1228,6 +1233,7 @@ func (ui *UI) layoutMenu(gtx layout.Context, sysIns system.Insets, expiry time.T
 				items = append(items, menuItem{title: "Use exit node...", btn: &menu.exits})
 			}
 			items = append(items,
+			    menuItem{title: "Change VPN type", btn: &menu.type},
 				menuItem{title: "Bug report", btn: &menu.bug},
 				menuItem{title: "Reauthenticate", btn: &menu.reauth},
 				menuItem{title: "Log out", btn: &menu.logout},

@@ -21,8 +21,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IPNService extends VpnService {
+
+	public static final AtomicBoolean onlyUseWifi = new AtomicBoolean(true);
 	public static final String ACTION_CONNECT = "com.tailscale.ipn.CONNECT";
 	public static final String ACTION_DISCONNECT = "com.tailscale.ipn.DISCONNECT";
 
@@ -45,33 +48,52 @@ public class IPNService extends VpnService {
 		disconnect();
 	}
 
+	public boolean changeVpnMode() {
+		boolean setV = !onlyUseWifi.get();
+		onlyUseWifi.set(setV);
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.NOTIFY_CHANNEL_ID)
+				.setSmallIcon(R.drawable.ic_notification)
+				.setContentTitle("网络模式")
+				.setContentText(setV ? "只用WIFI" : "不只用WIFI")
+				.setContentIntent(configIntent())
+				.setAutoCancel(true)
+				.setOnlyAlertOnce(false)
+				.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+		NotificationManagerCompat.from(this)
+				.notify(App.NOTIFY_NOTIFICATION_ID, builder.build());
+		return setV;
+	}
+
 	private Network[] getWifiNetworkOrElse() {
-		ConnectivityManager connectivityManager = getApplication().connectivityManager;
+		ConnectivityManager connectivityManager = ((App)getApplicationContext()).connectivityManager;
 		Network[] networks = connectivityManager.getAllNetworks();
 		List<Network> wifis = new ArrayList<>();
+		List<Network> others = new ArrayList<>();
 		for (Network network : networks) {
 			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
 			if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
 				wifis.add(network);
+			} else {
+				others.add(network);
 			}
 		}
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, 4)
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.NOTIFY_CHANNEL_ID)
 				.setSmallIcon(R.drawable.ic_notification)
-				.setContentTitle("使用类型")
+				.setContentTitle("使用模式")
 				.setContentIntent(configIntent())
 				.setAutoCancel(true)
 				.setOnlyAlertOnce(false)
 				.setPriority(NotificationCompat.PRIORITY_DEFAULT);
 		String time = SimpleDateFormat.getDateInstance().format(new Date());
-		if (wifis.isEmpty()) {
+		if (onlyUseWifi.get()) {
 			NotificationManagerCompat.from(this)
-					.notify(4, builder.setContentText(time + ":流量").build());
-			return networks;
+					.notify(App.NOTIFY_NOTIFICATION_ID, builder.setContentText(time + "  WIFI:"+wifis.size()).build());
 		} else {
 			NotificationManagerCompat.from(this)
-					.notify(4, builder.setContentText(time + ":WIFI").build());
-			return wifis.toArray(new Network[0]);
+					.notify(App.NOTIFY_NOTIFICATION_ID, builder.setContentText(time + "  WIFI:"+wifis.size() + "  Others:" + others.size()).build());
+			wifis.addAll(others);
 		}
+		return wifis.toArray(new Network[0]);
 	}
 
 	@Override public void onDestroy() {
