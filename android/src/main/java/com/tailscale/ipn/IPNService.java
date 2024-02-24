@@ -4,17 +4,19 @@
 
 package com.tailscale.ipn;
 
-import android.os.Build;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.VpnService;
+import android.net.Network;
+import android.net.NetworkInfo;
+import android.net.ConnectivityManager;
+import android.os.Build;
 import android.system.OsConstants;
-
-import org.gioui.GioActivity;
-
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+
+import java.util.*;
 
 public class IPNService extends VpnService {
 	public static final String ACTION_CONNECT = "com.tailscale.ipn.CONNECT";
@@ -36,6 +38,52 @@ public class IPNService extends VpnService {
 	private void close() {
 		stopForeground(true);
 		disconnect();
+	}
+
+	private ConnectivityManager getConnectivityManager() {
+		return (ConnectivityManager) getApplicationContext()
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+	}
+
+	private String[] titleMsg = new String[2];
+
+	private Network[] getWifiNetworkOrElse() {
+		ConnectivityManager connectivityManager = getConnectivityManager();
+		Network[] networks = connectivityManager.getAllNetworks();
+		List<Network> wifis = new LinkedList<>();
+		List<String> wifiInfos = new LinkedList<>();
+		List<String> otherInfos = new LinkedList<>();
+		for (Network network : networks) {
+			NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+			if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+				if (networkInfo)
+				wifis.add(network);
+				wifiInfos.add(networkInfo.toString());
+			} else {
+				otherInfos.add(networkInfo.toString());
+			}
+		}
+		if (!wifis.isEmpty()) {
+			titleMsg[0] = "WIFI网络";
+			titleMsg[1] = printNet(wifiInfos);
+			return wifis.toArray(new Network[0]);
+		} else if (networks.length > 0) {
+			titleMsg[0] = "流量网络";
+			titleMsg[1] = printNet(otherInfos);
+			return networks;
+		} else {
+			titleMsg[0] = "所有网络";
+			titleMsg[1]	= "无网络";
+			return null;
+		}
+	}
+
+	private String printNet(List<String> networks) {
+		List<String> list = new ArrayList<>();
+		for (int i = 0; i < networks.size(); i++) {
+			list.add((i + 1) + "." + networks.get(i));
+		}
+		return String.join("\n", list);
 	}
 
 	@Override public void onDestroy() {
@@ -69,7 +117,7 @@ public class IPNService extends VpnService {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
 			b.setMetered(false); // Inherit the metered status from the underlying networks.
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-			b.setUnderlyingNetworks(null); // Use all available networks.
+			b.setUnderlyingNetworks(getWifiNetworkOrElse()); // Use all available networks.
 
 		// RCS/Jibe https://github.com/tailscale/tailscale/issues/2322
 		this.disallowApp(b, "com.google.android.apps.messaging");
@@ -110,8 +158,8 @@ public class IPNService extends VpnService {
 	public void updateStatusNotification(String title, String message) {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, App.STATUS_CHANNEL_ID)
 			.setSmallIcon(R.drawable.ic_notification)
-			.setContentTitle(title)
-			.setContentText(message)
+			.setContentTitle(title + ("Connected".equals(title) ? "  " + titleMsg[0] : ""))
+			.setContentText(message == null || message.isEmpty() ? titleMsg[1] : message)
 			.setContentIntent(configIntent())
 			.setPriority(NotificationCompat.PRIORITY_LOW);
 
